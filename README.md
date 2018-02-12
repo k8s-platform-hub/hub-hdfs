@@ -1,55 +1,115 @@
-# base
+# hdfs
 
-A blank template to be used as a starting point to build projects on Hasura. A "project" is a "gittable" directory in the file system, which captures all the information regarding clusters, services and migrations. It can also be used to keep source code for custom services that you write.
+Follow along below to get the setup working on your cluster.
 
-## Files and Directories
+## Prerequisites
 
-The project (a.k.a. project directory) has a particular directory structure and it has to be maintained strictly, else `hasura` cli would not work as expected. A representative project is shown below:
+* Ensure that you have the [hasura cli](https://docs.hasura.io/0.15/manual/install-hasura-cli.html) tool installed on your system.
 
-```
-.
-├── hasura.yaml
-├── clusters.yaml
-├── conf
-│   ├── authorized-keys.yaml
-│   ├── auth.yaml
-│   ├── ci.yaml
-│   ├── domains.yaml
-│   ├── filestore.yaml
-│   ├── gateway.yaml
-│   ├── http-directives.conf
-│   ├── notify.yaml
-│   ├── postgres.yaml
-│   ├── routes.yaml
-│   └── session-store.yaml
-├── migrations
-│   ├── 1504788327_create_table_userprofile.down.yaml
-│   ├── 1504788327_create_table_userprofile.down.sql
-│   ├── 1504788327_create_table_userprofile.up.yaml
-│   └── 1504788327_create_table_userprofile.up.sql
-└── microservices 
-    ├── adminer
-    │   └── k8s.yaml
-    └── flask
-        ├── src/
-        ├── k8s.yaml
-        └── Dockerfile
+```sh
+$ hasura version
 ```
 
-### `hasura.yaml`
+Once you have installed the hasura cli tool, login to your Hasura account
 
-This file contains some metadata about the project, namely a name, description and some keywords. Also contains `platformVersion` which says which Hasura platform version is compatible with this project.
-
-### `clusters.yaml`
-
-Info about the clusters added to this project can be found in this file. Each cluster is defined by it's name allotted by Hasura. While adding the cluster to the project you are prompted to give an alias, which is just hasura by default. The `kubeContext` mentions the name of kubernetes context used to access the cluster, which is also managed by hasura. The `config` key denotes the location of cluster's metadata on the cluster itself. This information is parsed and cluster's metadata is appended while conf is rendered. `data` key is for holding custom variables that you can define.
-
-```yaml
-- name: h34-ambitious93-stg
-  alias: hasura
-  kubeContext: h34-ambitious93-stg
-  config:
-    configmap: controller-conf
-    namespace: hasura
-  data: null  
+```sh
+$ # Login if you haven't already
+$ hasura login
 ```
+
+* Ensure that you have [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)  installed on your system.
+
+```sh
+$ kubectl version
+```
+
+* You should also have [git](https://git-scm.com) installed.
+
+```sh
+$ git --version
+```
+
+## Getting started
+
+```sh
+$ # Run the quickstart command to get the project
+$ hasura quickstart hasura/hdfs
+```
+
+Note the name of the cluster printed in the output.
+
+```sh
+$ # Navigate into the Project
+$ cd hdfs
+```
+## Deploy app
+
+Deployment is a 3-step process.  
+   
+
+Step-1: Deploy Persistent Volumes and Persistent Volume Claims (https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
+
+```sh
+$ # Ensure that you are in the hdfs directory
+$ cd custom_k8s/pv
+$ kubectl create -f k8s.yaml --context=<cluster_name>
+```
+
+Step-2: Deploy Namenode 
+
+```sh
+$ # Ensure that you are in the hdfs directory
+$ cd custom_k8s/namenode
+$ kubectl create -f k8s.yaml --context=<cluster_name>
+```
+
+Step-3: Deploy Datanodes
+
+```sh
+$ # Ensure that you are in the hdfs directory
+$ cd custom_k8s/datanode
+$ kubectl create -f k8s.yaml --context=<cluster_name>
+```
+
+Optional Step: Deploy Namenode web UI
+
+To get a HTTPS endpoint to view your Namenode web UI. Append the following snippet to your `routes.yaml`
+
+```sh
+namenode:
+  /:
+    corsPolicy: allow_all
+    upstreamService:
+      name: namenode-web
+      namespace: '{{ cluster.metadata.namespaces.user }}'
+    upstreamServicePath: /
+    upstreamServicePort: 80
+```
+
+The upstream service `namenode-web` was already deployed as part of Step-2 above.
+
+```sh
+$ # Ensure that you are in the hdfs directory
+$ cd conf
+$ # Add above snippet to the end of routes.yaml
+$ vim routes.yaml
+$ # Commit changes and push
+$ git add . && git commit -m "add namenode ui route"
+$ git push hasura master
+```
+
+Goto `namenode.<cluster_name>.hasura-app.io` to access the Namenode web UI.
+
+## Explore HDFS
+
+Exec into `namenode-0` pod to run commands using `hdfs` client. 
+
+```sh
+$ kubectl exec -it namenode-0  --context=<cluster_name> -- /bin/bash
+
+root> hdfs dfs -put  /etc/hosts /
+root> hdfs dfs -ls /
+```
+
+And thats it!
+
