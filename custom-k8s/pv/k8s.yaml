@@ -1,0 +1,60 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    name: nn-pv-1
+    labels:
+      type: namenode
+  spec:
+    capacity:
+      storage: 1Gi
+    accessModes:
+    - ReadWriteOnce
+    storageClassName: default
+    hostPath:
+      path: "/data/default/user/name"
+
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    name: dn-pv-1
+  spec:
+    capacity:
+      storage: 1Gi
+    accessModes:
+    - ReadWriteOnce
+    storageClassName: default
+    hostPath:
+      path: "/data/default/user/1"
+
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    name: dn-pv-2
+  spec:
+    capacity:
+      storage: 1Gi
+    accessModes:
+    - ReadWriteOnce
+    storageClassName: default
+    hostPath:
+      path: "/data/default/user/2"
+
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: hdfs-name
+  spec:
+    selector:
+      matchLabels:
+        type: namenode
+    accessModes:
+    - ReadWriteOnce
+    storageClassName: default
+    resources:
+      requests:
+        storage: 1Gi
+
+kind: List
+metadata: {}

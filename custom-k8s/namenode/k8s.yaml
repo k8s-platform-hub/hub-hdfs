@@ -1,0 +1,86 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1beta1
+  kind: StatefulSet
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: namenode
+      hasuraService: custom
+    name: namenode
+    namespace: default
+  spec:
+    serviceName: namenode
+    replicas: 1
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: namenode
+      spec:
+        containers:
+        - image: uhopper/hadoop-namenode:2.7.2
+          imagePullPolicy: IfNotPresent
+          name: namenode
+          env:
+          - name: CLUSTER_NAME
+            value: hdfs-k8s
+          ports:
+          - containerPort: 8020
+            name: nn-rpc
+          - containerPort: 50070
+            name: nn-web
+          volumeMounts:
+          - name: hdfs-name
+            mountPath: /hadoop/dfs/name 
+          resources: {}
+        volumes:
+        - name: hdfs-name
+          persistentVolumeClaim: 
+            claimName: hdfs-name
+        securityContext: {}
+        terminationGracePeriodSeconds: 0
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: namenode
+      hasuraService: custom
+    name: namenode
+    namespace: default
+  spec:
+    ports:
+    - port: 8020
+      protocol: TCP
+      name: nn-rpc
+    - port: 80
+      targetPort: 50070
+      protocol: TCP
+      name: nn-web
+    selector:
+      app: namenode
+    clusterIP: None
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: namenode
+      hasuraService: custom
+    name: namenode-web
+    namespace: default
+  spec:
+    ports:
+    - port: 80
+      targetPort: 50070
+      protocol: TCP
+    selector:
+      app: namenode
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+kind: List
+metadata: {}

@@ -1,0 +1,63 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1beta1
+  kind: StatefulSet
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: datanode
+      hasuraService: custom
+    name: datanode
+    namespace: default
+  spec:
+    serviceName: "datanode"
+    replicas: 2
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: datanode
+      spec:
+        containers:
+        - image: uhopper/hadoop-datanode:2.7.2
+          imagePullPolicy: IfNotPresent
+          name: datanode
+          env:
+          - name: CORE_CONF_fs_defaultFS
+            value: hdfs://namenode-0.namenode:8020
+          resources: {}
+          volumeMounts:
+          - name: hdfs-data
+            mountPath: /hadoop/dfs/data
+        securityContext: {}
+        terminationGracePeriodSeconds: 0
+    volumeClaimTemplates:
+    - metadata:
+        name: hdfs-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: default
+        resources:
+          requests:
+            storage: 1Gi
+      
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: datanode
+      hasuraService: custom
+    name: datanode
+    namespace: default
+  spec:
+    ports:
+    - port: 80
+      protocol: TCP
+    selector:
+      app: datanode
+    clusterIP: None
+  status:
+    loadBalancer: {}
+kind: List
+metadata: {}
