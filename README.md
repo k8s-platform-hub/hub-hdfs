@@ -80,13 +80,13 @@ namenode:
   /:
     corsPolicy: allow_all
     upstreamService:
-      name: namenode-web
+      name: namenode
       namespace: '{{ cluster.metadata.namespaces.user }}'
     upstreamServicePath: /
     upstreamServicePort: 80
 ```
 
-The upstream service `namenode-web` was already deployed as part of Step-2 above.
+The upstream service `namenode` was already deployed as part of Step-2 above.
 
 ```sh
 $ # Ensure that you are in the hdfs directory
