@@ -166,7 +166,7 @@ namenode:
   /:
     corsPolicy: allow_all
     upstreamService:
-      name: namenode-web
+      name: namenode
       namespace: '{{ cluster.metadata.namespaces.user }}'
     upstreamServicePath: /
     upstreamServicePort: 80

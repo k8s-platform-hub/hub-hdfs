@@ -24,7 +24,7 @@ items:
           name: datanode
           env:
           - name: CORE_CONF_fs_defaultFS
-            value: hdfs://namenode-0.namenode:8020
+            value: hdfs://namenode:8020
           resources: {}
           volumeMounts:
           - name: hdfs-data
